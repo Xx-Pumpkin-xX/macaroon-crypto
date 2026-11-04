@@ -1,0 +1,6 @@
+pymacaroons==0.13.0
+# Pick ONE web framework and uncomment it:
+# flask
+# fastapi
+# uvicorn
+pytest

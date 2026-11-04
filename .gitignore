@@ -1,0 +1,34 @@
+# Secrets: never commit
+.env
+.env.*
+*.key
+*.pem
+secrets/
+root_keys*.json
+
+# Local data from running the server
+storage/
+uploads/
+*.db
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node (if used)
+node_modules/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# StarUML backups
+*.mdj.bak
