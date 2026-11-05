@@ -2,7 +2,7 @@
 
 Plain HTML + JavaScript. Uses the browser's WebCrypto API, no crypto library.
 
-Pages: upload, share, open link (download + decrypt), revoke, delete.
+Pages: upload (text files only), share (pick Read / Edit / Full Control + expiry), open link (download + decrypt), edit (re-encrypt with the same K and upload), revoke, delete.
 
 Rules from the design:
 

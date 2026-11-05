@@ -3,7 +3,7 @@
 Owner: Part 3. Reviewed by Part 1 and Part 2. Due 5/11.
 
 ## 1. Operations
-<!-- read / delete / admin: what each allows -->
+<!-- Decided: Read / Edit / Full Control. Write exactly what each allows. Text files only. -->
 
 ## 2. Caveat grammar
 <!-- file_id, op, expires, share_id: exact format and how the verifier checks each -->

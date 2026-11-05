@@ -8,7 +8,7 @@ Run with `pytest tests/`. Benchmarks go in `tests/bench/` and write their result
 - [ ] 2. Random or garbage signature is rejected
 - [ ] 3. A token for file A cannot open file B
 - [ ] 4. Removing any caveat is rejected
-- [ ] 5. Editing a caveat (`read` → `admin`) is rejected
+- [ ] 5. Editing a caveat (`op = read` → `op = full`) is rejected
 - [ ] 6. Reordering caveats is rejected
 - [ ] 7. Adding caveats never increases permissions
 - [ ] 8. An expired token is rejected
@@ -16,9 +16,11 @@ Run with `pytest tests/`. Benchmarks go in `tests/bench/` and write their result
 - [ ] 10. An unknown caveat is rejected
 - [ ] 11. Same root key, id and caveats give the same signature as an independent HMAC-SHA256 recomputation
 - [ ] 12. Oversized tokens (too many caveats, too long) are rejected
+- [ ] 13. Each permission allows only its own actions: Read cannot edit; Edit cannot revoke or delete
 
 ## Benchmarks
 
-- Token size and verify time vs number of caveats (1 to 50): HMAC (macaroon) vs Ed25519 chain
+- Token size and verify time vs number of caveats (1 to 50)
+- Optional, only if the Ed25519 prototype exists: same measurements for an Ed25519 chain
 - AES-GCM throughput vs file size
 - Record machine, Python version, number of runs; report the median

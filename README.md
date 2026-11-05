@@ -1,6 +1,7 @@
 # Macaroon File Share
 
-Anonymous file sharing with capability-based access control.
+Anonymous text-file sharing with capability-based access control.
+Three permissions: **Read**, **Edit** (change content, not delete the file) and **Full Control** (also revoke shares and delete the file).
 Files are encrypted in the browser (AES-256-GCM) and the key never leaves the client.
 Access is granted with **macaroons**: HMAC-chained bearer tokens that anyone can narrow (add caveats) but nobody can widen.
 
