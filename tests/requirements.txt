@@ -1,0 +1,6 @@
+# Test tooling; core and patched pymacaroons load from the repository.
+pytest>=9,<10
+PyNaCl>=1.5
+six>=1.16
+cryptography>=44
+matplotlib>=3.9

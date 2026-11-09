@@ -1,0 +1,19 @@
+{
+  "platform": "Linux-6.19.14+kali-amd64-x86_64-with-glibc2.42",
+  "processor": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+  "python": "3.13.12 (main, Feb  4 2026, 15:06:39) [GCC 15.2.0]",
+  "samples": 31,
+  "batch": 50,
+  "warmups": 5,
+  "timer": "perf_counter_ns",
+  "statistic": "median of batch means",
+  "pymacaroons_source": "backend/pymacaroons/pymacaroons/__init__.py",
+  "packages": {
+    "cryptography": "46.0.7",
+    "matplotlib": "3.10.7+dfsg1",
+    "pytest": "9.0.3"
+  },
+  "measured_at_utc": "2026-11-09T11:42:34Z",
+  "workload": "1 op, n-1 identical future expiry caveats; decoding included; core includes semantic evaluation; keys generated in memory; no I/O/network in timed sections",
+  "aes": "Python cryptography AES-256-GCM; encrypt includes os.urandom(12); decrypt reuses a valid ciphertext; not browser WebCrypto"
+}
