@@ -116,10 +116,11 @@ class FileStore:
     def revoke_share_id(self, file_id: str, share_id: str) -> None:
         if not ids.is_valid_share_id(share_id):
             raise ValueError(f"invalid share_id: {share_id!r}")
-        path = self._dir_for(file_id)
-        shares = self._read_shares_path(path)
-        shares["revoked"].add(share_id)
-        self._write_shares(path, shares["issued"], shares["revoked"])
+        with _SHARES_LOCK:
+            path = self._dir_for(file_id)
+            shares = self._read_shares_path(path)
+            shares["revoked"].add(share_id)
+            self._write_shares(path, shares["issued"], shares["revoked"])
 
     # -- internals --------------------------------------------------------
 
