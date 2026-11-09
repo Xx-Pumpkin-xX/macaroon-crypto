@@ -455,3 +455,36 @@ def test_delete_with_a_revoked_token(store, uploaded, narrow, now):
     with pytest.raises(Revoked):
         delete_file(uploaded.file_id, token, store=store, now=now)
     assert store.get_blob(uploaded.file_id) == b"nonce-and-ciphertext"
+
+@pytest.mark.parametrize("token", [None, "!!", "not-a-token"])
+def test_delete_checks_the_token_before_the_file_exists(store, now, token):
+    # Spec 3.1: token errors (401) come before the key lookup (404).
+    expected = MissingToken if token is None else InvalidToken
+    with pytest.raises(expected):
+        delete_file("A" * 22, token, store=store, now=now)
+
+
+def test_concurrent_share_and_revoke_keep_the_revocation(store, uploaded, now):
+    import threading
+
+    share = create_share(uploaded.token, "read", 3600, store=store, now=now)
+    threads = [
+        threading.Thread(
+            target=create_share,
+            args=(uploaded.token, "read", 3600),
+            kwargs={"store": store, "now": now},
+        )
+        for _ in range(20)
+    ]
+    threads.append(
+        threading.Thread(
+            target=revoke_share,
+            args=(uploaded.token, share.share_id),
+            kwargs={"store": store, "now": now},
+        )
+    )
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert share.share_id in store.get_revoked_share_ids(uploaded.file_id)
