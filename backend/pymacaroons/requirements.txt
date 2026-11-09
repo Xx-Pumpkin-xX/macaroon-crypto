@@ -1,0 +1,12 @@
+# Actual Dependencies
+-e .
+
+# Test Dependencies
+pytest
+pytest-coverage
+coverage
+sphinx>=1.2.3
+python-coveralls>=2.4.2
+hypothesis~=6.0
+bumpversion
+tox

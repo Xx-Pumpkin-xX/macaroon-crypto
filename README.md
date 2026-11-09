@@ -10,7 +10,7 @@ Access is granted with **macaroons**: HMAC-chained bearer tokens that anyone can
 ## Team
 
 | Part | Scope | Members |
-|---|---|---|
+| --- | --- | --- |
 | Leader | Reviews every pull request, final check of each part | Nguyễn Trương Thịnh |
 | 1. Build | Macaroon core (pymacaroons), Python backend | Trần Thị Thu Trang, Hoàng Ngân Anh |
 | 2. Test + data | Acceptance tests, attack scripts, benchmarks | Đỗ Trần Tuấn Đạt, Trịnh Phương Nam |
@@ -45,6 +45,7 @@ _Filled in by Part 1 once the backend runs._
 cd backend
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+python -m pip install ./pymacaroons
 # start command: TBD
 
 # tests
@@ -54,7 +55,7 @@ pytest tests/
 ## Key dates
 
 | Date | Milestone |
-|---|---|
+| --- | --- |
 | 5/11 | Repo + skeleton; design spec |
 | 6/11 | API spec reviewed by Part 1 |
 | 8/11 | Macaroon core with unit tests |
