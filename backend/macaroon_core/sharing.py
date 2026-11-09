@@ -127,9 +127,10 @@ def delete_file(
 ) -> None:
     file_store = store if store is not None else FileStore()
     current_time = _now(now)
-    info = tokens.verify_token(
-        token,
-        file_id,
+    # Spec 3.1 order: decode the token (401) before the key lookup (404).
+    macaroon = tokens.decode_token(token, file_id)
+    info = tokens.verify_decoded(
+        macaroon,
         file_store.get_root_key(file_id),
         file_store.get_revoked_share_ids(file_id),
         now=current_time,
