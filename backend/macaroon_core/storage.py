@@ -17,6 +17,7 @@ import json
 import os
 import shutil
 import tempfile
+import threading
 from pathlib import Path
 from typing import Iterable
 
@@ -30,7 +31,7 @@ _ROOT_KEY_NAME = "root_key"
 _SHARES_NAME = "shares.json"
 _FILE_MODE = 0o600
 _DIR_MODE = 0o700
-
+_SHARES_LOCK = threading.Lock()
 
 class FileStore:
     """Per-file state rooted in a directory."""
@@ -91,8 +92,9 @@ class FileStore:
         self._atomic_write(path / _BLOB_NAME, bytes(blob))
 
     def delete_file(self, file_id: str) -> None:
-        path = self._dir_for(file_id)
-        shutil.rmtree(path)
+        with _SHARES_LOCK:
+            path = self._dir_for(file_id)
+            shutil.rmtree(path)
 
     # -- share bookkeeping (used by the share/revoke endpoints) -----------
 
@@ -108,10 +110,11 @@ class FileStore:
     def add_issued_share_id(self, file_id: str, share_id: str) -> None:
         if not ids.is_valid_share_id(share_id):
             raise ValueError(f"invalid share_id: {share_id!r}")
-        path = self._dir_for(file_id)
-        shares = self._read_shares_path(path)
-        shares["issued"].add(share_id)
-        self._write_shares(path, shares["issued"], shares["revoked"])
+        with _SHARES_LOCK:
+            path = self._dir_for(file_id)
+            shares = self._read_shares_path(path)
+            shares["issued"].add(share_id)
+            self._write_shares(path, shares["issued"], shares["revoked"])
 
     def revoke_share_id(self, file_id: str, share_id: str) -> None:
         if not ids.is_valid_share_id(share_id):
