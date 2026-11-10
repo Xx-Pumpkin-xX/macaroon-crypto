@@ -97,10 +97,8 @@ def decode_token(token: object, file_id: str) -> Macaroon:
     deserializable, bound to ``file_id``, minted by us and carry at most
     ``MAX_CAVEATS`` first-party caveats.
     """
-    macaroon = _prepare(token)
-    if not isinstance(macaroon.identifier, str):
-        raise InvalidToken()
-    if macaroon.identifier != file_id:
+    macaroon, identifier = _prepare(token)
+    if identifier != file_id:
         raise InvalidToken()
     return macaroon
 
@@ -112,15 +110,18 @@ def peek_identifier(token: object) -> str:
     find the root key. The caller must still call :func:`verify_token` with
     the returned identifier and the stored key before trusting the token.
     """
-    macaroon = _prepare(token)
-    identifier = macaroon.identifier
-    if not isinstance(identifier, str) or not ids.is_valid_file_id(identifier):
+    _, identifier = _prepare(token)
+    if not ids.is_valid_file_id(identifier):
         raise InvalidToken()
     return identifier
 
 
-def _prepare(token: object) -> Macaroon:
-    """Steps 1-2 plus the structural checks that need no key."""
+def _prepare(token: object) -> tuple[Macaroon, str]:
+    """Steps 1-2 plus the structural checks that need no key.
+
+    Returns the macaroon together with its already-decoded identifier, so
+    callers never touch a raw non-UTF-8 identifier outside this try block.
+    """
     if token is None:
         raise MissingToken()
     if not isinstance(token, str) or not token:
@@ -141,17 +142,20 @@ def _prepare(token: object) -> Macaroon:
         raise InvalidToken()
 
     try:
+        identifier = macaroon.identifier
         location = macaroon.location
         caveat_texts = [caveat.caveat_id for caveat in macaroon.caveats]
     except Exception as exc:
         raise InvalidToken() from exc
 
+    if not isinstance(identifier, str):
+        raise InvalidToken()
     if location != TOKEN_LOCATION:
         raise InvalidToken()
     if any(not isinstance(text, str) for text in caveat_texts):
         raise InvalidToken()
 
-    return macaroon
+    return macaroon, identifier
 
 
 def verify_decoded(
@@ -186,9 +190,15 @@ def verify_decoded(
     if revoked.intersection(parsed.share_ids):
         raise Revoked()
 
+    try:
+        identifier = macaroon.identifier
+        location = macaroon.location
+    except Exception as exc:
+        raise InvalidToken() from exc
+
     return TokenInfo(
-        identifier=macaroon.identifier,
-        location=macaroon.location,
+        identifier=identifier,
+        location=location,
         op=parsed.op,
         expires_at=parsed.expires_at,
         share_ids=parsed.share_ids,
