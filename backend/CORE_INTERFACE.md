@@ -123,6 +123,11 @@ store.delete_file(file_id)                  # removes blob + key + shares
 idempotent. Do not change `shares.json`'s shape without updating Part 1 and
 Part 2's tests.
 
+`shares.json` is written when the file is created. If it is missing or
+malformed for an existing file, storage accessors raise `RuntimeError`; they
+do not treat it as an empty state or recreate it. This keeps a lost or corrupt
+revocation file fail-closed.
+
 ## Authenticating share/revoke requests (`sharing.py`)
 
 Both helper and endpoint functions below live in `sharing.py`. Share and
