@@ -1,8 +1,11 @@
-"""Flask HTTP layer for the first three API endpoints.
+"""Flask HTTP layer for the API endpoints.
 
-    POST /api/files                  -> create_file
-    GET  /api/files/{file_id}        -> read_file
-    PUT  /api/files/{file_id}        -> replace_file
+    POST   /api/files                -> create_file
+    GET    /api/files/{file_id}      -> read_file
+    PUT    /api/files/{file_id}      -> replace_file
+    POST   /api/share                -> create_share
+    POST   /api/revoke               -> revoke_share
+    DELETE /api/files/{file_id}      -> delete_file
 
 All capability rules live in :mod:`macaroon_core`; this module only translates
 HTTP requests, core errors and response headers. It never logs tokens, root
@@ -24,8 +27,11 @@ from macaroon_core import (
     MissingToken,
     TooLarge,
     create_file,
+    create_share,
+    delete_file,
     read_file,
     replace_file,
+    revoke_share,
 )
 
 OCTET_STREAM = "application/octet-stream"
@@ -50,6 +56,31 @@ def _bearer_token() -> str:
     ):
         raise InvalidToken()
     return value
+
+
+def _json_object() -> dict:
+    """Parse the JSON request body; anything but an object becomes ``{}``.
+
+    Spec 3.1: token errors (401/403/404) come before argument errors (400).
+    The core authenticates the token first and only then validates ``op``,
+    ``expires_in`` and ``share_id``. So a bad body must not fail here: the
+    helpers below turn a missing or wrongly typed field into a value that the
+    core rejects with ``400 bad_request`` after authentication.
+    """
+    data = request.get_json(force=True, silent=True)
+    return data if isinstance(data, dict) else {}
+
+
+def _text_field(body: dict, name: str) -> str:
+    value = body.get(name)
+    return value if isinstance(value, str) else ""  # "" is rejected by the core
+
+
+def _int_field(body: dict, name: str) -> int:
+    value = body.get(name)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    return 0  # out of the 60..2592000 range, rejected by the core
 
 
 def _is_api_request() -> bool:
@@ -99,6 +130,36 @@ def create_app(store: FileStore | None = None) -> Flask:
         token = _bearer_token()
         blob = request.get_data(cache=False)
         replace_file(file_id, token, blob, file_store())
+        return Response(status=204)
+
+    @app.post("/api/share")
+    def share():
+        token = _bearer_token()
+        body = _json_object()
+        result = create_share(
+            token,
+            _text_field(body, "op"),
+            _int_field(body, "expires_in"),
+            file_store(),
+        )
+        return jsonify(
+            token=result.token,
+            share_id=result.share_id,
+            op=result.op,
+            expires_at=result.expires_at,
+        )
+
+    @app.post("/api/revoke")
+    def revoke():
+        token = _bearer_token()
+        body = _json_object()
+        revoke_share(token, _text_field(body, "share_id"), file_store())
+        return Response(status=204)
+
+    @app.delete("/api/files/<file_id>")
+    def remove_file(file_id: str):
+        token = _bearer_token()
+        delete_file(file_id, token, file_store())
         return Response(status=204)
 
     # -- error handlers ---------------------------------------------------
