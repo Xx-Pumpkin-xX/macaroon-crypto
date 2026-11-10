@@ -92,7 +92,7 @@ def create_app(store: FileStore | None = None) -> Flask:
     """Build the Flask app. Tests pass their own ``FileStore``."""
     app = Flask(__name__, static_folder=None)
     app.config["FILE_STORE"] = store if store is not None else FileStore()
-    app.config["MAX_CONTENT_LENGTH"] = MAX_BLOB_SIZE
+    app.config["MAX_CONTENT_LENGTH"] = MAX_BLOB_SIZE + 1
     app.logger.setLevel(logging.INFO)
 
     # Flask's default exception logger writes a traceback, which can contain
