@@ -38,19 +38,21 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before your first commit. Short version:
 
 ## Running locally
 
-_Filled in by Part 1 once the backend runs._
-
 ```bash
 # backend
 cd backend
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python -m pip install ./pymacaroons
-# start command: TBD
+flask --app app run --host 127.0.0.1 --port 8000
 
 # tests
 pytest tests/
+pytest backend/tests
 ```
+
+Run the Flask server single-process (threaded) for the demo: the share/revoke
+lock is in-process only, so multiple workers can lose revocations.
 
 ## Key dates
 

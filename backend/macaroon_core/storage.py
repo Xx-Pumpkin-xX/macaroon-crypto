@@ -154,17 +154,30 @@ class FileStore:
         return self._read_shares_path(self._dir_for(file_id))
 
     def _read_shares_path(self, path: Path) -> dict[str, set[str]]:
+        # A file directory always gets shares.json at creation. Missing state
+        # for an existing file is corruption, not an empty revocation list:
+        # treating it as empty would restore revoked capabilities.
         try:
             raw = (path / _SHARES_NAME).read_text(encoding="utf-8")
-        except FileNotFoundError:
-            return {"issued": set(), "revoked": set()}
+        except FileNotFoundError as exc:
+            raise RuntimeError("shares.json is missing") from exc
+        except UnicodeDecodeError as exc:
+            raise RuntimeError("shares.json is corrupted") from exc
 
-        data = json.loads(raw)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("shares.json is corrupted") from exc
         if not isinstance(data, dict):
             raise RuntimeError("shares.json is corrupted")
+
+        issued = data.get("issued")
+        revoked = data.get("revoked")
+        if not isinstance(issued, list) or not isinstance(revoked, list):
+            raise RuntimeError("shares.json is corrupted")
         return {
-            "issued": _clean_share_ids(data.get("issued", [])),
-            "revoked": _clean_share_ids(data.get("revoked", [])),
+            "issued": _clean_share_ids(issued),
+            "revoked": _clean_share_ids(revoked),
         }
 
     def _write_shares(
@@ -201,7 +214,12 @@ class FileStore:
 def _clean_share_ids(values: object) -> set[str]:
     if not isinstance(values, list):
         raise RuntimeError("shares.json is corrupted")
-    return {value for value in values if ids.is_valid_share_id(value)}
+    cleaned: set[str] = set()
+    for value in values:
+        if not ids.is_valid_share_id(value):
+            raise RuntimeError("shares.json is corrupted")
+        cleaned.add(value)
+    return cleaned
 
 
 __all__ = ["DEFAULT_STORAGE_DIR", "FileStore"]
