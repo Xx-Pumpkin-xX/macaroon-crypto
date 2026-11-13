@@ -160,6 +160,112 @@ function setupWire() {
   });
 }
 
+/* ------------------------------------------------------------ shares */
+
+// Links made in this tab, per token they were made from. Only this tab knows
+// them: the server keeps share_ids, never the links themselves.
+const madeFrom = new Map();
+
+function shareIdsOf(token) {
+  try {
+    return describeToken(token)
+      .caveats.map((c) => /^share_id = ([0-9a-f]{16})$/.exec(c))
+      .filter(Boolean)
+      .map((m) => m[1]);
+  } catch {
+    return [];
+  }
+}
+
+/** Mark every recorded link that carries this share_id: revoking cascades. */
+function markRevoked(shareId) {
+  for (const list of [owner.shares, ...madeFrom.values()]) {
+    for (const s of list) if (shareIdsOf(s.token).includes(shareId)) s.revoked = true;
+  }
+}
+
+/** A list of links with their share_id, copy buttons and (for Full) Revoke. */
+function shareList(list, { slot, token, canRevoke, onRevoked }) {
+  const ul = h("ul", { class: "shares" });
+  const draw = () => {
+    fill(ul);
+    if (!list.length) {
+      ul.append(h("li", { class: "empty", text: "No links yet. Create one above." }));
+      return;
+    }
+    for (const s of list) {
+      const row = h(
+        "li",
+        { class: s.revoked ? "share revoked" : "share" },
+        badge(s.op),
+        h("span", { class: "share-when", text: s.revoked ? "Revoked" : when(s.expires_at) }),
+        h("code", { class: "share-id", title: "share_id", text: s.share_id }),
+        h(
+          "span",
+          { class: "share-actions" },
+          h("button", { type: "button", class: "btn btn-quiet", onclick: () => openAsRecipient(s.link) }, "Open as recipient"),
+          copyButton(s.link, "Copy link"),
+          copyButton(s.share_id, "Copy share_id"),
+          canRevoke && !s.revoked
+            ? h(
+                "button",
+                {
+                  type: "button",
+                  class: "btn btn-quiet btn-warn",
+                  onclick: async () => {
+                    try {
+                      await api.revoke(token, s.share_id);
+                      markRevoked(s.share_id);
+                      redrawShareLists();
+                      if (onRevoked) onRevoked();
+                      else refreshRecipient();
+                    } catch (err) {
+                      row.append(errorBox(err));
+                    }
+                  },
+                },
+                "Revoke",
+              )
+            : null,
+        ),
+      );
+      ul.append(row);
+    }
+  };
+  draw();
+  liveLists.set(slot, draw);
+  return { el: ul, draw };
+}
+
+const liveLists = new Map(); // slot ("owner" or "recipient") -> redraw
+function redrawShareLists() {
+  for (const draw of liveLists.values()) draw();
+}
+
+/** Two clicks to delete, so a stray click cannot remove the file for everyone. */
+function deleteButton(onDelete) {
+  const label = "Delete file";
+  const btn = h("button", { type: "button", class: "btn btn-danger" }, label);
+  let timer = null;
+  btn.addEventListener("click", async () => {
+    if (!timer) {
+      btn.textContent = "Click again to delete it for everyone";
+      timer = setTimeout(() => {
+        timer = null;
+        btn.textContent = label;
+      }, 4000);
+      return;
+    }
+    clearTimeout(timer);
+    timer = null;
+    btn.disabled = true;
+    await onDelete();
+    btn.disabled = false;
+    btn.textContent = label;
+  });
+  return btn;
+}
+
 /* --------------------------------------------------------------- owner */
 
 const owner = { file: null, upload: null, shares: [] };
@@ -230,48 +336,7 @@ function renderOwner() {
   $("#owner-start").hidden = true;
   const link = buildLink(u.fileId, u.token, u.keyB64);
 
-  const sharesList = h("ul", { class: "shares" });
-  const drawShares = () => {
-    fill(sharesList, );
-    if (!owner.shares.length) sharesList.append(h("li", { class: "empty", text: "No links yet. Create one above." }));
-    for (const s of owner.shares) {
-      const row = h(
-        "li",
-        { class: s.revoked ? "share revoked" : "share" },
-        badge(s.op),
-        h("span", { class: "share-when", text: s.revoked ? "Revoked" : when(s.expires_at) }),
-        h("code", { class: "share-id", title: "share_id", text: s.share_id }),
-        h(
-          "span",
-          { class: "share-actions" },
-          h("button", { type: "button", class: "btn btn-quiet", onclick: () => openAsRecipient(s.link) }, "Open as recipient"),
-          copyButton(s.link, "Copy"),
-          s.revoked
-            ? null
-            : h(
-                "button",
-                {
-                  type: "button",
-                  class: "btn btn-quiet btn-warn",
-                  onclick: async () => {
-                    try {
-                      await api.revoke(u.token, s.share_id);
-                      s.revoked = true;
-                      drawShares();
-                      refreshRecipient();
-                    } catch (err) {
-                      row.append(errorBox(err));
-                    }
-                  },
-                },
-                "Revoke",
-              ),
-        ),
-      );
-      sharesList.append(row);
-    }
-  };
-  drawShares();
+  const shares = shareList(owner.shares, { slot: "owner", token: u.token, canRevoke: true });
 
   const form = h("form", { class: "share-form" }, permissionPicker("owner-op", "full"), expirySelect("owner-exp"), h("button", { type: "submit", class: "btn" }, "Create link"));
   form.addEventListener("submit", async (e) => {
@@ -282,20 +347,16 @@ function renderOwner() {
       const s = await api.share(u.token, op, exp);
       s.link = buildLink(u.fileId, s.token, u.keyB64);
       owner.shares.unshift(s);
-      drawShares();
+      shares.draw();
     } catch (err) {
       form.after(errorBox(err));
     }
   });
 
-  const del = h("button", { type: "button", class: "btn btn-danger" }, "Delete file");
-  del.addEventListener("click", async () => {
+  const del = deleteButton(async () => {
     try {
       await api.remove(u.fileId, u.token);
-      fill(body,
-        h("div", { class: "notice" }, h("strong", { text: "File deleted." }), h("p", { text: "Its root key is gone too, so every link for it now returns 404. Try opening one on the right." })),
-        h("button", { type: "button", class: "btn", onclick: resetOwner }, "Start again"),
-      );
+      showOwnerDeleted();
       refreshRecipient();
     } catch (err) {
       body.append(errorBox(err));
@@ -309,8 +370,17 @@ function renderOwner() {
     h("div", { class: "row" }, h("button", { type: "button", class: "btn btn-quiet", onclick: () => openAsRecipient(link) }, "Open as recipient"), copyButton(link)),
     h("h3", { text: "Create a link for someone else" }),
     form,
-    sharesList,
+    shares.el,
     h("div", { class: "row row-end" }, del),
+  );
+}
+
+function showOwnerDeleted() {
+  const body = $("#owner-body");
+  if (!body) return;
+  fill(body,
+    h("div", { class: "notice" }, h("strong", { text: "File deleted." }), h("p", { text: "Its root key is gone too, so every link for it now returns 404." })),
+    h("button", { type: "button", class: "btn", onclick: resetOwner }, "Start again"),
   );
 }
 
@@ -420,38 +490,61 @@ function renderRecipient(file, permission, info) {
   }
 
   // Share further: never above this link's own level.
-  const shareOut = h("div", { class: "share-out" });
-  const form = h("form", { class: "share-form" }, permissionPicker("rec-op", permission), expirySelect("rec-exp"), h("button", { type: "submit", class: "btn btn-quiet" }, "Create a narrower link"));
+  const canFull = permission === "full";
+  if (!madeFrom.has(current.token)) madeFrom.set(current.token, []);
+  const made = madeFrom.get(current.token);
+  const shares = shareList(made, { slot: "recipient", token: current.token, canRevoke: canFull });
+  const shareMsg = h("div");
+  const form = h("form", { class: "share-form" }, permissionPicker("rec-op", permission), expirySelect("rec-exp"), h("button", { type: "submit", class: "btn btn-quiet" }, "Create link"));
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const op = form.querySelector("input[name=rec-op]:checked").value;
     try {
       const s = await api.share(current.token, op, Number(form.querySelector("select").value));
-      const link = buildLink(current.fileId, s.token, current.keyB64);
-      fill(shareOut,
-        h("p", { class: "done", text: `New ${OP_NAME[s.op]} link. It keeps every caveat above and adds three more.` }),
-        linkAnatomy(link),
-        h("div", { class: "row" }, h("button", { type: "button", class: "btn btn-quiet", onclick: () => openAsRecipient(link) }, "Open this link"), copyButton(link)),
-      );
+      s.link = buildLink(current.fileId, s.token, current.keyB64);
+      made.unshift(s);
+      shares.draw();
+      fill(shareMsg, h("p", { class: "fine", text: `New ${OP_NAME[s.op]} link: it keeps every caveat of this link and adds op, expires and its own share_id.` }));
     } catch (err) {
-      fill(shareOut, errorBox(err));
+      fill(shareMsg, errorBox(err));
     }
   });
 
   const extra = [];
-  if (permission === "full") {
-    const rid = h("input", { class: "input", placeholder: "share_id to revoke", "aria-label": "share_id to revoke", pattern: "[0-9a-f]{16}" });
+  if (canFull) {
+    const rid = h("input", { class: "input", placeholder: "share_id, 16 hex characters", "aria-label": "share_id to revoke", pattern: "[0-9a-f]{16}" });
     const rbtn = h("button", { type: "button", class: "btn btn-quiet btn-warn" }, "Revoke");
     const rmsg = h("div");
     rbtn.addEventListener("click", async () => {
+      const id = rid.value.trim().toLowerCase();
       try {
-        await api.revoke(current.token, rid.value.trim());
-        fill(rmsg, h("p", { class: "done", text: "Revoked." }));
+        await api.revoke(current.token, id);
+        markRevoked(id);
+        redrawShareLists();
+        fill(rmsg, h("p", { class: "done", text: `Revoked ${id}. Every link made from it is blocked too.` }));
+        rid.value = "";
       } catch (err) {
         fill(rmsg, errorBox(err));
       }
     });
-    extra.push(h("h3", { text: "Revoke a share" }), h("div", { class: "row" }, rid, rbtn), rmsg);
+    const del = deleteButton(async () => {
+      try {
+        await api.remove(current.fileId, current.token);
+        if (owner.upload && owner.upload.fileId === current.fileId) showOwnerDeleted();
+        fill(out,
+          h("div", { class: "notice" }, h("strong", { text: "File deleted." }), h("p", { text: "Its root key is gone, so every link for it now returns 404, this one included." })),
+        );
+      } catch (err) {
+        out.append(errorBox(err));
+      }
+    });
+    extra.push(
+      h("h3", { text: "Revoke a link made elsewhere" }),
+      h("p", { class: "fine", text: "Links made above have their own Revoke button. For any other link of this file, paste its share_id: it is the last share_id in that link's caveat list." }),
+      h("div", { class: "row" }, rid, rbtn),
+      rmsg,
+      h("div", { class: "row row-end" }, del),
+    );
   }
 
   fill(out,
@@ -459,9 +552,11 @@ function renderRecipient(file, permission, info) {
     area,
     actions,
     info ? chainView(info) : null,
-    h("h3", { text: "Share further" }),
+    h("h3", { text: canFull ? "Share and manage links" : "Share further" }),
     form,
-    shareOut,
+    shareMsg,
+    h("p", { class: "fine", text: "Links made from this link in this tab:" }),
+    shares.el,
     ...extra,
   );
 }
