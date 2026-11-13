@@ -63,8 +63,8 @@ The server is trusted to enforce access control (it holds the root keys and runs
 |---|---|---|---|---|
 | Outsider | Nothing | Guess a `file_id`, forge a token | `file_id` is 128 random bits; a valid signature needs the root key (HMAC-SHA256) | A02, A03, A12, A14 |
 | Recipient | A Read or Edit link | Remove or edit a caveat, reorder caveats, add `op = full`, use an unknown caveat | HMAC chain is one-way; lowest `op` wins; unknown caveats rejected | A04–A07, A10, A13 |
-| Holder of an old link | An expired or revoked token | Keep using it | `expires` caveat; revoked `share_id` list | A08, A09; known gaps F01, F03 in PENTEST_FINDINGS.md |
-| Network observer | Traffic between browser and server | Read K or the file | K stays after `#` and is never sent; content is encrypted. Needs HTTPS; the demo runs on localhost | Manual: browser Network tab |
+| Holder of an old link | An expired or revoked token | Keep using it | `expires` caveat; revoked `share_id` list | A08, A09; F03 fixed (49cf05f); F01 open, avoided by running one process |
+| Network observer | Traffic between browser and server | Read K or the file | K stays after `#` and is never sent; content is encrypted. Needs HTTPS: the public demo forces HTTPS (docs/DEPLOY.md) | Manual: browser Network tab |
 | Curious server or storage leak | Blobs, logs, disk | Read files or filenames | AES-256-GCM with K that never reaches the server. Still visible: blob size, time, IP | Manual: inspect `storage/` and logs |
 
 ### 5.3 Out of scope
