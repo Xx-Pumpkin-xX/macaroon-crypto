@@ -60,7 +60,7 @@ a:hover { background: var(--g); color: #000; text-decoration: none; }
 .muted { color: var(--dim); }
 .fine { color: var(--dim); font-size: 0.84rem; max-width: var(--measure); }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.row-end { justify-content: flex-end; }
+.row-end { justify-content: flex-end; margin-top: 16px; }
 .cursor { display: inline-block; width: 0.6em; height: 1.05em; background: var(--g); vertical-align: -0.15em; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
