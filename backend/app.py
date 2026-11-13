@@ -15,8 +15,9 @@ keys or blobs.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, request
+from flask import Flask, Response, g, jsonify, request, send_from_directory
 from werkzeug.exceptions import HTTPException, RequestEntityTooLarge
 
 from macaroon_core import (
@@ -35,6 +36,16 @@ from macaroon_core import (
 )
 
 OCTET_STREAM = "application/octet-stream"
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
+# Pages may only run scripts, styles and fonts from this server, and may only
+# talk to this server. This limits what injected content could do with the
+# file key in the URL fragment.
+CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; script-src 'self'; style-src 'self'; "
+    "img-src 'self' data:; font-src 'self'; connect-src 'self'; "
+    "object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+)
 
 
 def _bearer_token() -> str:
@@ -162,6 +173,21 @@ def create_app(store: FileStore | None = None) -> Flask:
         delete_file(file_id, token, file_store())
         return Response(status=204)
 
+    # -- frontend ---------------------------------------------------------
+
+    @app.get("/")
+    def frontend_index():
+        return send_from_directory(FRONTEND_DIR, "index.html")
+
+    @app.get("/<any(demo, network, how, lab, results, view):page>.html")
+    def frontend_page(page: str):
+        return send_from_directory(FRONTEND_DIR, f"{page}.html")
+
+    # Only these folders are served, so no static route can shadow /api/...
+    @app.get("/<any(css, js, fonts):folder>/<path:name>")
+    def frontend_asset(folder: str, name: str):
+        return send_from_directory(FRONTEND_DIR / folder, name)
+
     # -- error handlers ---------------------------------------------------
 
     @app.errorhandler(CoreError)
@@ -214,6 +240,8 @@ def create_app(store: FileStore | None = None) -> Flask:
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        if not _is_api_request():
+            response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
         # Method, path, status and error code only. No query string, headers,
         # tokens, keys or bodies.
         app.logger.info(

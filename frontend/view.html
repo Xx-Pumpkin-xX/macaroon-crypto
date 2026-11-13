@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Shared file – Macaroon File Share</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body data-page="view">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-prompt" aria-hidden="true">&gt;</span>macaroon_share</a>
+    <nav aria-label="Pages">
+      <a href="/">Overview</a>
+      <a href="/demo.html">Live demo</a>
+      <a href="/network.html">Network map</a>
+      <a href="/how.html">How it works</a>
+      <a href="/lab.html">Attack lab</a>
+      <a href="/results.html">Results</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page page-view">
+    <div class="view-desk">
+      <article class="term pane pane-recipient" id="recipient" aria-labelledby="recipient-title">
+        <header class="term-bar">
+          <h1 id="recipient-title">Shared file</h1>
+          <span>decrypted in this tab</span>
+        </header>
+        <div class="term-body">
+          <p class="muted">The file is decrypted here with the key after <code>#</code> in the address. That part of the address is never sent to the server.</p>
+          <form id="open-form" class="open-form">
+            <label for="link-input" class="visually-hidden">Link</label>
+            <input id="link-input" class="input" placeholder="Paste a link" autocomplete="off" spellcheck="false">
+            <button type="submit" class="btn btn-ghost">Open</button>
+          </form>
+          <div id="recipient-body" aria-live="polite">
+            <p class="muted">Paste a link to open it.</p>
+          </div>
+        </div>
+      </article>
+      <section class="term wire" aria-labelledby="wire-title">
+        <header class="term-bar">
+          <h2 id="wire-title">What the server sees</h2>
+          <p id="key-check" class="wire-check">Every request this tab sends is listed here, newest first.</p>
+        </header>
+        <ol id="wire-log" class="wire-log"></ol>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Cryptography course midterm, 2026. Source and specs: <a href="https://github.com/Xx-Pumpkin-xX/macaroon-crypto">github.com/Xx-Pumpkin-xX/macaroon-crypto</a></p>
+  </footer>
+</body>
+</html>

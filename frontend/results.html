@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Results – Macaroon File Share</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body data-page="results">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-prompt" aria-hidden="true">&gt;</span>macaroon_share</a>
+    <nav aria-label="Pages">
+      <a href="/">Overview</a>
+      <a href="/demo.html">Live demo</a>
+      <a href="/network.html">Network map</a>
+      <a href="/how.html">How it works</a>
+      <a href="/lab.html">Attack lab</a>
+      <a href="/results.html" aria-current="page">Results</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page page-results">
+    <header class="page-head">
+      <h1>Results</h1>
+      <p>What was tested, how fast it runs, how it compares with other ways to grant access, what the pentest found, and what the design does not cover.</p>
+    </header>
+
+    <div class="report">
+      <nav class="report-toc" aria-label="On this page">
+        <a href="#tests">Tests</a>
+        <a href="#speed">Speed</a>
+        <a href="#compare">Comparison</a>
+        <a href="#pentest">Pentest</a>
+        <a href="#limits">Limits</a>
+      </nav>
+
+      <div class="report-body">
+        <section id="tests" aria-labelledby="tests-title">
+          <h2 id="tests-title">Automated tests</h2>
+          <div class="stats">
+            <p class="stat"><span class="stat-num">403</span><span class="stat-label">core and HTTP tests pass (Part 1)</span></p>
+            <p class="stat"><span class="stat-num">46</span><span class="stat-label">acceptance and attack tests pass (Part 2)</span></p>
+            <p class="stat stat-warn"><span class="stat-num">1</span><span class="stat-label">known open issue, marked as expected to fail (F01)</span></p>
+          </div>
+          <p class="fine">pytest on commit <code>9300017</code>, run on 13 Nov 2026. No signature bypass was found in the tested scope; passing tests alone do not prove the system secure.</p>
+        </section>
+
+        <section id="speed" aria-labelledby="speed-title">
+          <h2 id="speed-title">Speed and size</h2>
+          <div class="charts">
+            <figure>
+              <figcaption><h3>Each caveat adds about 39 bytes to the token</h3><p>176 bytes with one caveat, 911 at the server's limit of 20.</p></figcaption>
+              <div id="chart-size"></div>
+            </figure>
+            <figure>
+              <figcaption><h3>Checking a token takes microseconds</h3><p>17 µs with one caveat, 144 µs at the limit, including every rule the server enforces.</p></figcaption>
+              <div id="chart-verify"></div>
+            </figure>
+            <figure>
+              <figcaption><h3>Encryption is not the bottleneck</h3><p>AES-256-GCM handles a full 1 MiB file in under 0.1 ms on the test machine.</p></figcaption>
+              <div id="chart-aes"></div>
+            </figure>
+          </div>
+          <p id="bench-meta" class="fine"></p>
+        </section>
+
+        <section id="compare" aria-labelledby="compare-title">
+          <h2 id="compare-title">Compared with other ways to grant access</h2>
+          <div class="table-scroll">
+            <table class="data compare">
+              <thead><tr><th></th><th scope="col">Macaroon (this project)</th><th scope="col">ACL</th><th scope="col">Signed JWT</th><th scope="col">S3 presigned URL</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Access is based on</th><td>Holding the token; every caveat holds</td><td>An account or group with a grant</td><td>Verified claims plus app policy</td><td>Holding a signed URL</td></tr>
+                <tr><th scope="row">Recipient needs an account</th><td>No</td><td>Usually</td><td>Not required by JWT</td><td>No</td></tr>
+                <tr><th scope="row">Holder can narrow it themselves</th><td>Yes: add a caveat, no root key</td><td>No: an admin changes the grant</td><td>No: changing claims breaks the signature</td><td>No: only the signer can re-sign</td></tr>
+                <tr><th scope="row">Revocation</th><td>Revoke a share_id; blocks all links made from it (needs server state)</td><td>Remove the grant</td><td>Needs extra design, such as a deny list</td><td>Wait for expiry or revoke the signing credentials</td></tr>
+                <tr><th scope="row">Content encryption</th><td>Separate: AES-GCM in the browser</td><td>Not included</td><td>JWS is signed, not encrypted</td><td>Not included</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fine">A qualitative comparison from Part 2's notes, not a benchmark. Sources: the Macaroons paper (Birgisson et al., NDSS 2014), AWS S3 documentation, RFC 7519.</p>
+        </section>
+
+        <section id="pentest" aria-labelledby="pentest-title">
+          <h2 id="pentest-title">Pentest findings</h2>
+          <ol class="findings">
+            <li class="finding open">
+              <p class="finding-head"><span class="finding-id">F01</span><span class="status status-open">Open</span><span class="sev">P1</span></p>
+              <p>Two server processes revoking at the same time can lose one revocation.</p>
+              <p class="fine">The demo runs a single process, which avoids it.</p>
+            </li>
+            <li class="finding fixed">
+              <p class="finding-head"><span class="finding-id">F02</span><span class="status status-fixed">Fixed</span><span class="sev">P2</span></p>
+              <p>A token with invalid UTF-8 in its identifier crashed the service instead of returning 401.</p>
+              <p class="fine">Commit <code>a734aad</code>, with regression tests.</p>
+            </li>
+            <li class="finding fixed">
+              <p class="finding-head"><span class="finding-id">F03</span><span class="status status-fixed">Fixed</span><span class="sev">P2</span></p>
+              <p>If a file's revocation record went missing, revoked links worked again.</p>
+              <p class="fine">Commit <code>49cf05f</code>: the server now refuses access instead.</p>
+            </li>
+          </ol>
+        </section>
+
+        <section id="limits" aria-labelledby="limits-title">
+          <h2 id="limits-title">What this does not protect against</h2>
+          <dl class="limits">
+            <dt>A malicious server</dt>
+            <dd>It holds the root keys, so it could mint any token, and it serves this page's JavaScript, so it could ship code that reads <code>k</code> from the link.</dd>
+            <dt>Content already downloaded</dt>
+            <dd>Revoking a link stops future downloads. A recipient who already has the file and <code>k</code> keeps them.</dd>
+            <dt>A leaked link</dt>
+            <dd>A link works for whoever holds it. A leaked share can be revoked; a leaked owner link cannot, because it has no share_id. The only fix then is deleting the file.</dd>
+            <dt>Metadata</dt>
+            <dd>The server still sees file size, timing and IP addresses. "Anonymous" means no account, not network anonymity.</dd>
+            <dt>Rollback</dt>
+            <dd>The server could serve an older version of the file. AES-GCM detects changed data, not an old but genuine copy.</dd>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Cryptography course midterm, 2026. Source and specs: <a href="https://github.com/Xx-Pumpkin-xX/macaroon-crypto">github.com/Xx-Pumpkin-xX/macaroon-crypto</a></p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Network map – Macaroon File Share</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body data-page="network">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-prompt" aria-hidden="true">&gt;</span>macaroon_share</a>
+    <nav aria-label="Pages">
+      <a href="/">Overview</a>
+      <a href="/demo.html">Live demo</a>
+      <a href="/network.html" aria-current="page">Network map</a>
+      <a href="/how.html">How it works</a>
+      <a href="/lab.html">Attack lab</a>
+      <a href="/results.html">Results</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page page-network">
+    <header class="page-head net-head">
+      <h1>Network map</h1>
+      <p>One server, six people. Alice owns a file and hands out links by chat. Eve and Mallory want in without being given access. Run the steps in order, or press Open and Save on anyone. Every request goes to the real backend, and the server card shows which check passed or stopped it.</p>
+    </header>
+
+    <ol class="net-steps" aria-label="Steps">
+      <li><button type="button" class="btn" id="net-setup">Hand out links</button><span>Alice uploads a file, then gives Bob and Carol a link. Bob makes one for Dave.</span></li>
+      <li><button type="button" class="btn" id="net-test">Test everyone</button><span>Each person tries to open the file and to save a change.</span></li>
+      <li><button type="button" class="btn" id="net-revoke">Revoke Bob's link</button><span>Watch who else loses access.</span></li>
+      <li><button type="button" class="btn" id="net-delete">Delete the file</button><span>Alice deletes it. Every link dies.</span></li>
+    </ol>
+    <p class="net-reset-row"><button type="button" class="btn btn-small btn-ghost" id="net-reset">Start over</button></p>
+
+    <div class="net-map" id="net-map"></div>
+
+    <ul class="net-legend" aria-label="How to read the map">
+      <li><span class="lg lg-req" aria-hidden="true"></span>Request to the server</li>
+      <li><span class="lg lg-give" aria-hidden="true"></span>Link handed over by chat; the server never sees it</li>
+      <li><span class="lg lg-stolen" aria-hidden="true"></span>Link copied without permission</li>
+      <li><span class="chip chip-k">key k</span>Can decrypt the file</li>
+    </ul>
+
+    <div class="net-below">
+      <section class="net-story" aria-labelledby="story-title">
+        <h2 id="story-title">What just happened</h2>
+        <ol id="net-log" class="net-log" aria-live="polite"></ol>
+      </section>
+      <section class="net-table" aria-labelledby="matrix-title">
+        <h2 id="matrix-title">Who can do what</h2>
+        <table class="data matrix" id="net-matrix">
+          <thead><tr><th scope="col">Person</th><th scope="col">Holds</th><th scope="col">Open</th><th scope="col">Save</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="fine">Filled in from the server's real answers. Open needs a Read link or better; Save needs Edit or better.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Cryptography course midterm, 2026. Source and specs: <a href="https://github.com/Xx-Pumpkin-xX/macaroon-crypto">github.com/Xx-Pumpkin-xX/macaroon-crypto</a></p>
+  </footer>
+</body>
+</html>

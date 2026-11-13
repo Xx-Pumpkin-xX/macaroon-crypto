@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Live demo – Macaroon File Share</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body data-page="demo">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-prompt" aria-hidden="true">&gt;</span>macaroon_share</a>
+    <nav aria-label="Pages">
+      <a href="/">Overview</a>
+      <a href="/demo.html" aria-current="page">Live demo</a>
+      <a href="/network.html">Network map</a>
+      <a href="/how.html">How it works</a>
+      <a href="/lab.html">Attack lab</a>
+      <a href="/results.html">Results</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page page-demo">
+    <header class="page-head">
+      <h1>Live demo</h1>
+      <p>On the left you are the owner. On the right you are whoever receives a link. Underneath is everything the server receives. Nothing is simulated: every button calls the real backend.</p>
+    </header>
+
+    <div class="desk">
+      <article class="term pane pane-owner" id="owner" aria-labelledby="owner-title">
+        <header class="term-bar">
+          <h2 id="owner-title">Owner</h2>
+          <span>upload, share, revoke, delete</span>
+        </header>
+        <div class="term-body">
+          <div id="owner-start">
+            <label class="drop" id="drop" for="file-input">
+              <span class="drop-main">Choose a .txt file or drop it here</span>
+              <span class="drop-sub">Up to 1 MiB. It is encrypted before it leaves this page.</span>
+              <input id="file-input" type="file" accept=".txt,text/plain" class="visually-hidden">
+            </label>
+            <p class="row">
+              <button type="button" class="btn btn-ghost" id="sample-btn">Use a sample note</button>
+              <span id="file-chosen" class="muted" aria-live="polite"></span>
+            </p>
+            <button type="button" class="btn" id="upload-btn" disabled>Encrypt and upload</button>
+          </div>
+          <div id="owner-body" aria-live="polite"></div>
+        </div>
+      </article>
+
+      <article class="term pane pane-recipient" id="recipient" aria-labelledby="recipient-title">
+        <header class="term-bar">
+          <h2 id="recipient-title">Recipient</h2>
+          <span>open a link, do only what it allows</span>
+        </header>
+        <div class="term-body">
+          <form id="open-form" class="open-form">
+            <label for="link-input" class="visually-hidden">Link</label>
+            <input id="link-input" class="input" placeholder="Paste a link, or use Open as recipient" autocomplete="off" spellcheck="false">
+            <button type="submit" class="btn btn-ghost">Open</button>
+          </form>
+          <div id="recipient-body" aria-live="polite">
+            <p class="muted">Upload a file on the left, create a link, then choose Open as recipient.</p>
+          </div>
+        </div>
+      </article>
+
+      <section class="term wire" aria-labelledby="wire-title">
+        <header class="term-bar">
+          <h2 id="wire-title">What the server sees</h2>
+          <p id="key-check" class="wire-check">Every request this page sends is listed here, newest first.</p>
+        </header>
+        <ol id="wire-log" class="wire-log"></ol>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Cryptography course midterm, 2026. Source and specs: <a href="https://github.com/Xx-Pumpkin-xX/macaroon-crypto">github.com/Xx-Pumpkin-xX/macaroon-crypto</a></p>
+  </footer>
+</body>
+</html>

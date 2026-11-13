@@ -54,6 +54,10 @@ pytest backend/tests
 Run the Flask server single-process (threaded) for the demo: the share/revoke
 lock is in-process only, so multiple workers can lose revocations.
 
+Every push and pull request runs the full test suite on GitHub Actions
+(`.github/workflows/tests.yml`). The public demo runs on PythonAnywhere; see
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Key dates
 
 | Date | Milestone |

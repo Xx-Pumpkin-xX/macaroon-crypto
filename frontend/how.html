@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>How it works – Macaroon File Share</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body data-page="how">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-prompt" aria-hidden="true">&gt;</span>macaroon_share</a>
+    <nav aria-label="Pages">
+      <a href="/">Overview</a>
+      <a href="/demo.html">Live demo</a>
+      <a href="/network.html">Network map</a>
+      <a href="/how.html" aria-current="page">How it works</a>
+      <a href="/lab.html">Attack lab</a>
+      <a href="/results.html">Results</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page page-how">
+    <header class="page-head">
+      <h1>How it works</h1>
+      <p>Five steps, from the moment a file leaves your browser to the moment a link stops working.</p>
+    </header>
+
+    <ol class="steps">
+      <li class="step" id="step-encrypt">
+        <h2>The file is encrypted before it leaves the browser</h2>
+        <p>The page makes a random 256-bit key <code>k</code> and encrypts the file name and text with AES-256-GCM. The server stores one opaque blob and never sees <code>k</code>, so it cannot read the file. The tag at the end means any change to the blob is detected when it is decrypted.</p>
+        <figure class="blob" aria-label="Blob layout: nonce, ciphertext, tag">
+          <span class="blob-nonce">nonce<small>12 bytes</small></span><span class="blob-ct">ciphertext of {name, text}<small>same length as the input</small></span><span class="blob-tag">tag<small>16 bytes</small></span>
+        </figure>
+      </li>
+
+      <li class="step" id="step-link">
+        <h2>A link carries three things</h2>
+        <p>Everything after <code>#</code> stays in the browser: browsers do not send the fragment to the server. The page sends <code>f</code> in the request path and <code>t</code> in a header, and keeps <code>k</code> to itself.</p>
+        <div class="anatomy">
+          <p class="anatomy-link"><span class="seg-base">localhost:8000/view.html</span><span class="seg-hash">#</span><span class="seg seg-f">f=q3J8xY2mN0aPz7Lk1VbC4w</span><span class="seg-amp">&amp;</span><span class="seg seg-t">t=MDAyMWxvY2…dmZjQK</span><span class="seg-amp">&amp;</span><span class="seg seg-k">k=Rk9xS1d3…</span></p>
+          <ul class="anatomy-key">
+            <li class="key-f"><strong>f</strong> file ID: picks the file. Sent in the path.</li>
+            <li class="key-t"><strong>t</strong> token: what this link may do. Sent in the Authorization header.</li>
+            <li class="key-k"><strong>k</strong> file key: decrypts the file. Never sent.</li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="step" id="step-chain">
+        <h2>The token is a chain of HMACs</h2>
+        <p>Only the first signature needs the server's root key. Each caveat after it is chained with <code>HMAC(previous signature, caveat)</code>, so anyone holding a token can add a caveat, but removing one would mean running HMAC backwards. Add caveats, then strip one. This sandbox uses a throwaway key made in your browser, not the server's.</p>
+        <div id="sandbox" class="sandbox">
+          <p class="sb-root">Root key (sandbox only): <code id="sb-root"></code></p>
+          <ol id="sb-rows" class="sb-rows"></ol>
+          <div class="row sb-add">
+            <span class="muted">Add a caveat:</span>
+            <button type="button" class="btn btn-small btn-ghost" data-add="op = read">op = read</button>
+            <button type="button" class="btn btn-small btn-ghost" data-add="expires">expires &lt; tomorrow</button>
+            <button type="button" class="btn btn-small btn-ghost" data-add="share">share_id</button>
+            <button type="button" class="btn btn-small btn-ghost" data-add="op = full">op = full (try to widen)</button>
+            <button type="button" class="btn btn-small btn-ghost" id="sb-reset">Reset</button>
+          </div>
+          <div id="sb-verdict" class="sb-verdict"></div>
+        </div>
+      </li>
+
+      <li class="step" id="step-checks">
+        <h2>The server checks every request in a fixed order</h2>
+        <p>The first check that fails decides the answer. 401 means the token is not genuine; 403 means it is genuine but does not allow this.</p>
+        <ol class="gate">
+          <li><span class="gate-q">Was a token sent?</span><code class="gate-no">401 missing_token</code></li>
+          <li><span class="gate-q">Does the file still exist?</span><code class="gate-no">404 not_found</code></li>
+          <li><span class="gate-q">Does the HMAC chain, rebuilt from the root key, give the same signature? Are all caveats known, and at most 20?</span><code class="gate-no">401 invalid_token</code></li>
+          <li><span class="gate-q">Is the earliest expiry still in the future?</span><code class="gate-no">403 expired</code></li>
+          <li><span class="gate-q">Is no share_id in the token revoked?</span><code class="gate-no">403 revoked</code></li>
+          <li><span class="gate-q">Does the lowest op allow this action?</span><code class="gate-no">403 forbidden</code></li>
+          <li class="gate-pass"><span class="gate-q">All passed</span><code>200 or 204</code></li>
+        </ol>
+      </li>
+
+      <li class="step" id="step-revoke">
+        <h2>Revoking a share cuts off everything made from it</h2>
+        <p>Every share gets a random <code>share_id</code> caveat, and links made from it inherit that caveat. Revoking <code>S1</code> blocks B, and C, who got a link through B. D's link came from a separate share, so it keeps working. The <a href="/network.html">network map</a> shows this against the real server.</p>
+        <div id="tree" class="tree">
+          <ul>
+            <li class="t-owner">Owner <span class="t-cav">op = full</span>
+              <ul>
+                <li class="t-b">B <span class="t-cav">S1</span><span class="t-state">blocked</span>
+                  <ul><li class="t-c">C <span class="t-cav">S1, S2</span><span class="t-state">blocked</span></li></ul>
+                </li>
+                <li class="t-d">D <span class="t-cav">S3</span><span class="t-state t-fine">still works</span></li>
+              </ul>
+            </li>
+          </ul>
+          <button type="button" class="btn btn-ghost" id="tree-btn" aria-pressed="false">Revoke S1</button>
+        </div>
+      </li>
+    </ol>
+  </main>
+
+  <footer class="foot">
+    <p>Cryptography course midterm, 2026. Source and specs: <a href="https://github.com/Xx-Pumpkin-xX/macaroon-crypto">github.com/Xx-Pumpkin-xX/macaroon-crypto</a></p>
+  </footer>
+</body>
+</html>
