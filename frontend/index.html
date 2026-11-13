@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Macaroon File Share</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body data-page="home">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-prompt" aria-hidden="true">&gt;</span>macaroon_share</a>
+    <nav aria-label="Pages">
+      <a href="/" aria-current="page">Overview</a>
+      <a href="/demo.html">Live demo</a>
+      <a href="/network.html">Network map</a>
+      <a href="/how.html">How it works</a>
+      <a href="/lab.html">Attack lab</a>
+      <a href="/results.html">Results</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page page-home">
+    <section class="home-hero" aria-labelledby="hero-title">
+      <div class="home-copy">
+        <h1 id="hero-title">Share a file with a link that can be narrowed, never widened.</h1>
+        <p class="lede">Anyone can upload a text file, no account needed. The browser encrypts it first, so the server only ever stores ciphertext. Access is handed out as links carrying a macaroon: a token anyone can make weaker, nobody can make stronger, and the owner can take back.</p>
+        <p class="row">
+          <a class="btn btn-big" href="/network.html">See who can reach the file</a>
+          <a class="btn btn-big btn-ghost" href="/demo.html">Try it yourself</a>
+        </p>
+      </div>
+      <figure class="term term-intro">
+        <figcaption class="term-bar">
+          <span>example-session.log</span>
+          <button type="button" class="btn btn-small btn-ghost" id="intro-replay">Replay</button>
+        </figcaption>
+        <div id="intro-screen" class="term-screen" role="log" aria-label="An example session, one line per step"></div>
+      </figure>
+    </section>
+
+    <section class="home-facts" aria-labelledby="facts-title">
+      <h2 id="facts-title">Three things the design promises</h2>
+      <dl class="facts">
+        <div>
+          <dt>The server cannot read your file</dt>
+          <dd>The browser encrypts it with AES-256-GCM and a fresh key <code>k</code>. That key travels after the <code>#</code> in the link, and browsers never send that part to a server.</dd>
+        </div>
+        <div>
+          <dt>A link can only get weaker</dt>
+          <dd>Each limit (read only, expires at, share ID) is chained into the token with HMAC. Anyone holding the link can add a limit. Removing or changing one breaks the signature.</dd>
+        </div>
+        <div>
+          <dt>The owner can take a link back</dt>
+          <dd>Revoking a share blocks that link and every link made from it. Other links keep working.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="home-tour" aria-labelledby="tour-title">
+      <h2 id="tour-title">Where to look, in a good order</h2>
+      <ol class="tour">
+        <li><a href="/network.html"><span class="tour-path">/network</span><span class="tour-title">Network map</span><span class="tour-desc">Six people and one server. Watch who gets in, who is turned away, and which check stopped them.</span></a></li>
+        <li><a href="/demo.html"><span class="tour-path">/demo</span><span class="tour-title">Live demo</span><span class="tour-desc">Be the owner and the recipient side by side, and read every request the server receives.</span></a></li>
+        <li><a href="/how.html"><span class="tour-path">/how</span><span class="tour-title">How it works</span><span class="tour-desc">The encrypted blob, the three parts of a link, and an HMAC chain you can try to break.</span></a></li>
+        <li><a href="/lab.html"><span class="tour-path">/lab</span><span class="tour-title">Attack lab</span><span class="tour-desc">Twelve attacks against the running server, each compared with what the design promises.</span></a></li>
+        <li><a href="/results.html"><span class="tour-path">/results</span><span class="tour-title">Results</span><span class="tour-desc">Test counts, speed measurements, a comparison with other approaches, pentest findings and limits.</span></a></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Cryptography course midterm, 2026. Source and specs: <a href="https://github.com/Xx-Pumpkin-xX/macaroon-crypto">github.com/Xx-Pumpkin-xX/macaroon-crypto</a></p>
+  </footer>
+</body>
+</html>

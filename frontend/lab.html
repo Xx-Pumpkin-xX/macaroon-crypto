@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Attack lab – Macaroon File Share</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body data-page="lab">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-prompt" aria-hidden="true">&gt;</span>macaroon_share</a>
+    <nav aria-label="Pages">
+      <a href="/">Overview</a>
+      <a href="/demo.html">Live demo</a>
+      <a href="/network.html">Network map</a>
+      <a href="/how.html">How it works</a>
+      <a href="/lab.html" aria-current="page">Attack lab</a>
+      <a href="/results.html">Results</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page page-lab">
+    <header class="page-head lab-head">
+      <div>
+        <h1>Attack lab</h1>
+        <p>Each scenario attacks the running backend the way a link holder or an outsider could, then compares the answer with the design. The IDs match Part 2's acceptance plan. A green row means the attack was stopped exactly as designed.</p>
+      </div>
+      <div class="lab-run">
+        <button type="button" class="btn btn-big" id="lab-all">Run all 12 attacks</button>
+        <p id="lab-bar" class="lab-bar" aria-hidden="true">[............] 0/12</p>
+        <p id="lab-summary" class="muted" aria-live="polite"></p>
+      </div>
+    </header>
+    <ol id="lab-list" class="lab-list"></ol>
+  </main>
+
+  <footer class="foot">
+    <p>Cryptography course midterm, 2026. Source and specs: <a href="https://github.com/Xx-Pumpkin-xX/macaroon-crypto">github.com/Xx-Pumpkin-xX/macaroon-crypto</a></p>
+  </footer>
+</body>
+</html>
