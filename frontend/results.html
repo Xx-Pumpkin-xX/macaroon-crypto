@@ -41,11 +41,11 @@
         <section id="tests" aria-labelledby="tests-title">
           <h2 id="tests-title">Automated tests</h2>
           <div class="stats">
-            <p class="stat"><span class="stat-num">403</span><span class="stat-label">core and HTTP tests pass (Part 1)</span></p>
+            <p class="stat"><span class="stat-num">407</span><span class="stat-label">core and HTTP tests pass (Part 1)</span></p>
             <p class="stat"><span class="stat-num">46</span><span class="stat-label">acceptance and attack tests pass (Part 2)</span></p>
             <p class="stat stat-warn"><span class="stat-num">1</span><span class="stat-label">known open issue, marked as expected to fail (F01)</span></p>
           </div>
-          <p class="fine">pytest on commit <code>9300017</code>, run on 13 Nov 2026. No signature bypass was found in the tested scope; passing tests alone do not prove the system secure.</p>
+          <p class="fine">pytest, run on 14 Nov 2026; GitHub Actions runs the same suite on every push (Python 3.10 and 3.13). No signature bypass was found in the tested scope; passing tests alone do not prove the system secure.</p>
         </section>
 
         <section id="speed" aria-labelledby="speed-title">
@@ -86,6 +86,7 @@
 
         <section id="pentest" aria-labelledby="pentest-title">
           <h2 id="pentest-title">Pentest findings</h2>
+          <h3 class="sub">Internal review (Part 2, source and test suite)</h3>
           <ol class="findings">
             <li class="finding open">
               <p class="finding-head"><span class="finding-id">F01</span><span class="status status-open">Open</span><span class="sev">P1</span></p>
@@ -103,6 +104,23 @@
               <p class="fine">Commit <code>49cf05f</code>: the server now refuses access instead.</p>
             </li>
           </ol>
+
+          <h3 class="sub">External test of the public site (13 Nov 2026)</h3>
+          <p class="fine">Black-box requests against the live site plus a review of the public source, about 130 requests in total, no load testing. No high or medium findings; the 20 core controls behaved as designed, and F02 was confirmed fixed on the live site.</p>
+          <div class="table-scroll">
+            <table class="data findings-table">
+              <thead><tr><th scope="col">Finding</th><th scope="col">Level</th><th scope="col">Status</th></tr></thead>
+              <tbody>
+                <tr><td>No <code>Strict-Transport-Security</code> header, so a first visit over plain HTTP could be downgraded</td><td>Low</td><td class="st-fixed">Fixed: header sent on every response</td></tr>
+                <tr><td>Anonymous uploads have no rate limit, so the free 512 MiB disk could be filled</td><td>Low</td><td class="st-open">Open: abuse is out of scope; future work</td></tr>
+                <tr><td>A token with a bad signature gets 404 for a deleted file but 401 for an existing one, so it reveals whether a file_id exists</td><td>Info</td><td class="st-accepted">Accepted: file_id is 128 random bits, and the check order is fixed by the API spec</td></tr>
+                <tr><td>No <code>Permissions-Policy</code> header</td><td>Info</td><td class="st-fixed">Fixed: camera, microphone, location, payment and USB turned off</td></tr>
+                <tr><td>The recipient view does not say the text was written by another user (text-only phishing)</td><td>Info</td><td class="st-fixed">Fixed: notice above the file content</td></tr>
+                <tr><td>A full link, key included, stays in browser history</td><td>Residual</td><td class="st-fixed">Fixed: the shared-file page removes the link from the address bar after opening it</td></tr>
+                <tr><td>Hosting banner, 302 redirect to HTTPS, proxy version on error pages</td><td>Info</td><td class="st-accepted">PythonAnywhere platform; not configurable by the app</td></tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section id="limits" aria-labelledby="limits-title">

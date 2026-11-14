@@ -226,6 +226,7 @@ a:hover { background: var(--g); color: #000; text-decoration: none; }
 .open-form { display: flex; gap: 8px; margin: 12px 0 14px; }
 .file-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; }
 .file-name { margin: 0; font-size: 1.6rem; }
+.user-content-note { color: var(--amber); font-size: 0.8rem; border-left: 3px solid var(--amber); padding: 2px 0 2px 10px; margin-bottom: 8px; }
 .content { width: 100%; resize: vertical; font: 400 0.88rem/1.55 var(--mono); color: var(--g); padding: 10px 12px; border: 1px solid var(--line-2); background: #000; margin-bottom: 10px; border-radius: 0; }
 .content[readonly] { border-style: dashed; color: var(--text); }
 .share-out { margin-top: 10px; }
@@ -450,6 +451,12 @@ a:hover { background: var(--g); color: #000; text-decoration: none; }
 .table-scroll .data { min-width: 760px; }
 .table-scroll + .fine { margin-top: 8px; }
 
+.report-body h3.sub { font-size: 1.5rem; margin: 24px 0 12px; }
+.report-body h3.sub:first-of-type { margin-top: 0; }
+.findings-table td:nth-child(2) { white-space: nowrap; color: var(--dim); }
+.st-fixed { color: var(--g); }
+.st-open { color: var(--amber); }
+.st-accepted { color: var(--text); }
 .findings { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
 .finding { border-left: 3px solid var(--g); padding: 4px 0 4px 16px; display: grid; gap: 4px; }
 .finding.open { border-left-color: var(--amber); }

@@ -41,6 +41,8 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 # Pages may only run scripts, styles and fonts from this server, and may only
 # talk to this server. This limits what injected content could do with the
 # file key in the URL fragment.
+# The pages use none of these browser features.
+PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 CONTENT_SECURITY_POLICY = (
     "default-src 'self'; script-src 'self'; style-src 'self'; "
     "img-src 'self' data:; font-src 'self'; connect-src 'self'; "
@@ -240,6 +242,10 @@ def create_app(store: FileStore | None = None) -> Flask:
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        # Browsers only honour HSTS on HTTPS, so local HTTP runs are unaffected.
+        # No includeSubDomains: the demo runs on a shared parent domain.
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
+        response.headers["Permissions-Policy"] = PERMISSIONS_POLICY
         if not _is_api_request():
             response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
         # Method, path, status and error code only. No query string, headers,

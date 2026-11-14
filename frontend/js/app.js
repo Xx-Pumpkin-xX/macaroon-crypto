@@ -12,7 +12,7 @@ const PAGE = document.body.dataset.page; // home, demo, network, how, lab, resul
 const OP_NAME = { read: "Read", edit: "Edit", full: "Full control" };
 const SAMPLE = {
   name: "meeting-notes.txt",
-  text: "Crypto midterm, meeting notes\n\n- Backend: 6 endpoints merged\n- Tests: 449 passing\n- Demo on Friday\n",
+  text: "Crypto midterm, meeting notes\n\n- Backend: 6 endpoints merged\n- Tests: 453 passing\n- Demo on Friday\n",
 };
 
 function when(ts) {
@@ -549,6 +549,7 @@ function renderRecipient(file, permission, info) {
 
   fill(out,
     h("div", { class: "file-head" }, h("h3", { class: "file-name", text: file.name }), badge(permission), h("span", { class: "muted", text: info ? when(info.expiresAt) : "" })),
+    h("p", { class: "user-content-note", text: "Written by whoever made this link. Check who sent it before you follow any instructions or links in it." }),
     area,
     actions,
     info ? chainView(info) : null,
@@ -572,6 +573,10 @@ function setupRecipient() {
     const link = location.href;
     $("#link-input").value = link;
     openLink(link);
+    // Keep the token and key out of the address bar and browser history.
+    // The link stays in the box above for copying.
+    history.replaceState(null, "", location.pathname);
+    $("#key-hidden")?.removeAttribute("hidden");
   }
 }
 
