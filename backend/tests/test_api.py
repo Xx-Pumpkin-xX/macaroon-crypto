@@ -102,6 +102,8 @@ def test_download_returns_blob_and_security_headers(client, uploaded):
     assert response.headers["Cache-Control"] == "no-store"
     assert response.headers["Referrer-Policy"] == "no-referrer"
     assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["Strict-Transport-Security"] == "max-age=31536000"
+    assert "camera=()" in response.headers["Permissions-Policy"]
 
 
 @pytest.mark.parametrize("op", ["read", "edit", "full"])
@@ -925,3 +927,16 @@ def test_spec_example_flow(client, store):
     assert response.status_code == 204
 
     assert_error(get_file(client, file_id, token_a), 404, "not_found")
+
+
+@pytest.mark.parametrize("path", ["/", "/view.html", "/network.html", "/js/app.js"])
+def test_frontend_responses_carry_browser_security_headers(client, path):
+    response = client.get(path)
+
+    assert response.status_code == 200
+    assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+    assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
+    assert response.headers["Strict-Transport-Security"] == "max-age=31536000"
+    assert "includeSubDomains" not in response.headers["Strict-Transport-Security"]
+    assert response.headers["Permissions-Policy"].startswith("camera=()")
+    assert response.headers["Referrer-Policy"] == "no-referrer"
