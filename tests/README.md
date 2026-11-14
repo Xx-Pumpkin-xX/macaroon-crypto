@@ -41,7 +41,7 @@ trên nền tảng hỗ trợ fork; Windows sẽ skip ca này.
 | Tệp/thư mục | Mục đích |
 |---|---|
 | `test_acceptance.py` | 41 ca: quyền, chia sẻ, tampering, hết hạn, thu hồi, sai file |
-| `test_pentest.py` | 6 ca xfail ghi nhận 3 lỗi chưa sửa, gồm smoke fuzz 2.000 mutation |
+| `test_pentest.py` | 6 ca cho 3 lỗi F01–F03, gồm smoke fuzz 2.000 mutation; F02, F03 đã sửa nên pass, còn 1 xfail cho F01 |
 | `attack.py` | Chạy 28 ca tấn công/từ chối, xuất `results/attacks.xml` |
 | `bench/benchmark.py` | Đo token 1–50 caveat và AES-256-GCM |
 | `results/tokens.csv`, `aes.csv` | Bảng số liệu để vẽ/trích báo cáo |
@@ -49,24 +49,23 @@ trên nền tảng hỗ trợ fork; Windows sẽ skip ca này.
 | `results/*.png` | Ba biểu đồ kích thước token, verify, thông lượng AES |
 | `results/*.xml` | Bằng chứng pytest/JUnit; mỗi file là một lần chạy, không cộng dồn số test |
 
-Kết quả tại thời điểm bàn giao: **307 passed, 6 xfailed** khi chạy cả hai
-phần; riêng Phần 2 **41 passed, 6 xfailed**. Xfail là kỳ vọng bảo mật đang
-thất bại do lỗi đã biết, không phải lỗi đã sửa. Để hiện lỗi gốc:
+Kết quả hiện tại (14/11, `main`): **453 passed, 1 xfailed** khi chạy toàn bộ
+(`python -m pytest -q`); riêng Phần 2 **46 passed, 1 xfailed**. Xfail còn lại là
+F01 (thu hồi giữa nhiều process), lỗi đã biết, tránh bằng cách chạy 1 process.
+GitHub Actions chạy lại toàn bộ suite mỗi lần push. Khi bàn giao (9/11) con số là
+307 passed, 6 xfailed. Để hiện lỗi gốc của F01:
 
 ```bash
 python -m pytest tests/test_pentest.py --runxfail -q
 ```
 
-## Phần còn phải làm
+## Trạng thái các việc còn lại
 
-- Phần 1: xử lý mất cập nhật thu hồi giữa nhiều worker, lỗi identifier UTF-8,
-  và mất revocation metadata theo `PENTEST_FINDINGS.md`. Sau sửa, bỏ marker
-  xfail tương ứng và chạy lại cả suite.
-- Phần 3: khi có HTTP/frontend, chạy lại qua API/trình duyệt; kiểm tra headers,
-  status/error JSON, fragment, nonce AES-GCM và log. Hiện chỉ kiểm thử service.
-- Nhóm viết báo cáo: dùng notes, CSV và 2–3 biểu đồ để tự viết Đánh giá theo
-  quy định trong CONTRIBUTING.md. Đây chưa phải bản văn báo cáo nộp.
-- Ed25519 là hạng mục tùy chọn chưa triển khai; không có số liệu HMAC/Ed25519.
+- F02 (identifier UTF-8) đã sửa ở `a734aad`, F03 (mất metadata thu hồi) đã sửa ở
+  `49cf05f`. F01 (nhiều worker) vẫn mở: bản demo chạy 1 process.
+- Lớp HTTP và frontend đã có; kịch bản được chạy lại qua trình duyệt ở trang
+  Attack lab của bản demo (12/12 đúng thiết kế).
+- Ed25519 là hạng mục tùy chọn, nhóm không triển khai.
 
 ## Giới hạn số liệu
 
